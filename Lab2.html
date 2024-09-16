@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab-2</title>
+    <style> 
+        
+        button {
+            padding: 10px 20px;
+            background-color: black;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin: 5px;
+            cursor: pointer;
+        }
+
+        
+        button:hover {
+            background-color: #45a049;
+        }
+
+    
+        #content {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+
+        
+        
+    </style>
+</head>
+<body>
+
+    <h3>Lab-2 Assignment</h3>
+    <h4>Cat API</h4>
+
+    <button onclick="AllNamesByMe()">All Cat Names</button><br><br>
+    <input type="number" id="healthIssueInput" placeholder="Enter health issue number" />
+    <button onclick="CatsByHealthIssueByMe()">Cats By Health Issue</button><br><br>
+    
+    <!-- Radio buttons for selecting weight unit -->
+    <label><input type="radio" name="weightUnit" value="imperial" checked> Imperial</label>
+    <label><input type="radio" name="weightUnit" value="metric"> Metric</label>
+    <button onclick="SelectedWeightByMe()">Load Weights</button><br><br>
+
+    <button onclick="IntelligenceAndFriendlinessByMe()">Intelligence & Friendliness</button><br><br>
+    <button onclick="AverageIntelligenceByMe()">Average Intelligence</button>
+    <button onclick="AverageIntelligenceForChildFriendlyByMe()">Avg Intelligence (Child Friendly)</button>
+
+    <p id="output"></p>
+
+    <script>
+        const jsonUrl = "https://api.thecatapi.com/v1/breeds";
+        const contentElement = document.getElementById("output");
+
+        /*output clear karne ke liye ye function banaya he*/
+        function clearContent() {
+            contentElement.innerHTML = ''
+        }
+
+       /* ye function thi output jova malse*/
+        function OutputMessage(totalCats) {
+            const message = document.createElement('p');
+            message.innerHTML = `Total number of cats: ${totalCats}`;
+            contentElement.appendChild(message);
+        }
+
+        /* aa function thi cat health issue vara function ma error jova malse jo user kai pan type na kare to*/
+        function ShowError(message) {
+            const errorMessage = document.createElement('p');
+            errorMessage.className = 'error';
+            errorMessage.innerText = message;
+            contentElement.appendChild(errorMessage);
+        }
+
+        /* badhi cat na name jova mate*/
+        function AllNamesByMe() {
+            clearContent();
+            fetch(jsonUrl)
+                .then(response => response.json())
+                .then(data => {
+                    OutputMessage(data.length);
+                    data.forEach(cat => {
+                        const lineBreak = document.createElement('br');
+                        contentElement.appendChild(document.createTextNode(cat.name));
+                        contentElement.appendChild(lineBreak);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        
+        function CatsByHealthIssueByMe() {
+            clearContent();
+            const issueNumber = document.getElementById("healthIssueInput").value;
+
+            
+            if (!issueNumber) {
+                ShowError("Please enter a health issue number.");
+                return;
+            }
+
+            fetch(jsonUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const filteredCats = data.filter(cat => cat.health_issues == issueNumber);
+                    OutputMessage(filteredCats.length);
+                    filteredCats.forEach(cat => {
+                        const lineBreak = document.createElement('br');
+                        contentElement.appendChild(document.createTextNode(cat.name));
+                        contentElement.appendChild(lineBreak);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        
+        function SelectedWeightByMe() {
+            clearContent();
+            const selectedUnit = document.querySelector('input[name="weightUnit"]:checked').value;
+            /*kayu button select karelu chhe tena parthi output aapva*/
+            fetch(jsonUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const catsWithWeights = data.filter(cat => cat.weight && cat.weight[selectedUnit]);
+                    OutputMessage(catsWithWeights.length);
+                    catsWithWeights.forEach(cat => {
+                        const weight = selectedUnit === 'imperial' ? cat.weight.imperial : cat.weight.metric;
+                        const lineBreak = document.createElement('br');
+                        contentElement.appendChild(document.createTextNode(`${cat.name}: ${weight}`));
+                        contentElement.appendChild(lineBreak);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+    
+        function IntelligenceAndFriendlinessByMe() {
+            clearContent();
+            fetch(jsonUrl)
+                .then(response => response.json())
+                .then(data => {
+                    OutputMessage(data.length);
+                    data.forEach(cat => {
+                        const lineBreak = document.createElement('br');
+                        contentElement.appendChild(document.createTextNode(`${cat.name}: Intelligence: ${cat.intelligence}, Child Friendly: ${cat.child_friendly}`));
+                        contentElement.appendChild(lineBreak);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        
+        function AverageIntelligenceByMe() {
+            clearContent();
+            fetch(jsonUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const totalIntelligence = data.reduce((sum, cat) => sum + cat.intelligence, 0);
+                    const averageIntelligence = totalIntelligence / data.length;
+                    
+                    contentElement.appendChild(document.createTextNode(`Average Intelligence of all cats: ${averageIntelligence.toFixed(2)}`));
+                })
+                .catch(error => console.error('Error:', error));
+        }
+
+        
+        function AverageIntelligenceForChildFriendlyByMe() {
+            clearContent();
+            fetch(jsonUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const childFriendlyCats = data.filter(cat => cat.child_friendly >= 4);
+                    const totalIntelligence = childFriendlyCats.reduce((sum, cat) => sum + cat.intelligence, 0);
+                    const averageIntelligence = totalIntelligence / childFriendlyCats.length;
+                
+                    contentElement.appendChild(document.createTextNode(`Average Intelligence of child-friendly cats: ${averageIntelligence.toFixed(2)}`));
+                })
+                .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>
